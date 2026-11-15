@@ -1,4 +1,5 @@
-
+// Houni nconfiguriw el connexion mta3 MongoDB Atlas
+// El lien mta3 el database njibouh mel fichier .env
 const mongoose = require('mongoose');
 
 // Houni na3mlou connexion m3a MongoDB
