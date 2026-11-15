@@ -1,5 +1,8 @@
-// سكريبت يعمل أول حساب manager: npm run seed:manager
-// المعلومات تتقرا من .env (MANAGER_NOM, MANAGER_LOGIN, MANAGER_PASSWORD)
+
+// Houni 3anna script bech na3mlou awel compte manager
+// Bech nchaghlouh nesta3mlou commande : npm run seed:manager
+// Les informations mta3 el manager njibouhom mel fichier .env
+// MANAGER_NOM, MANAGER_LOGIN w MANAGER_PASSWORD
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
