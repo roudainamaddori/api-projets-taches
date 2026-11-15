@@ -1,10 +1,11 @@
+
 const mongoose = require('mongoose');
 
-// الـ schema متاع المشروع
+// Houni ndefiniw el schema mta3 projet
 const projectSchema = new mongoose.Schema({
   nom: { type: String, required: [true, 'Le nom du projet est requis'], trim: true },
   description: { type: String, trim: true },
-  // صاحب المشروع (ID متاع user)
+  // Houni n7ottou ID mta3 el user elli houwa proprietaire mta3 projet
   proprietaire: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   statut: {
     type: String,
