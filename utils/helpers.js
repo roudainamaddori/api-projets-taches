@@ -6,7 +6,8 @@ exports.asyncHandler = (fn) => (req, res, next) =>
 
 // Houni nescapiw les caracteres speciaux
 // bech el recherche bel regex ma tetkasserch
-exports.escapeRegex = (texte) => texte.replace(/[.\*+?^${}()|[**\\]\\\\**]/g, '\\\\$&');
+
+exports.escapeRegex = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Houni na9blou ken texte normal mel query
 // bech nemn3ou injection kima ?statut[$ne]=x
