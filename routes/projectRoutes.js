@@ -1,3 +1,4 @@
+
 const express = require('express');
 const {
   createProject, getProjects, getProject, updateProject, deleteProject,
@@ -6,13 +7,17 @@ const { protect } = require('../middlewares/auth');
 
 const router = express.Router();
 
-// كل روتات المشاريع محمية: لازم token
+// Houni les routes mta3 les projets el kol mahmiyin bel token JWT
 router.use(protect);
 
-// الروتات المتاع التاسكات داخل مشروع: /api/projects/:projectId/tasks
+// Houni nربطou les routes mta3 tasks b projet mo3ayen
+// Exemple : /api/projects/:projectId/tasks
 router.use('/:projectId/tasks', require('./taskRoutes'));
 
+// Houni na3mlou projet jdid wala njibou liste mta3 les projets
 router.route('/').post(createProject).get(getProjects);
+
+// Houni njibou projet bel ID, nbaddlouh wala nafs5ouh
 router.route('/:id').get(getProject).put(updateProject).delete(deleteProject);
 
 module.exports = router;
