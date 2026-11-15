@@ -1,110 +1,129 @@
-﻿### Variables (adapter manager / mot de passe a ceux du fichier .env)
+﻿### Houni n7ottou les variables elli bech nesta3mlouhom fel API
+### Login w mot de passe mta3 manager nal9awhom fel fichier .env
 @url = http://localhost:3000/api
 @managerLogin = manager
 @managerPassword = COLLE_MANAGER_PASSWORD
 
-### 1) Creer un user (le role envoye est ignore : le compte est toujours "user")
+### 1) Tawa bech na3mlou compte jdid l user Ali
+### El role dima user, 7atta ken nab3thou role ekher
 POST {{url}}/auth/register
 Content-Type: application/json
 
 { "nom": "Ali", "login": "ali", "motDePasse": "123456" }
 
-### 2) Login du user (copier le token dans @tokenUser plus bas)
+### 2) Tawa bech na3mlou login lel user Ali
+### Ki yarja3lna token, ncopyiwah w n7ottouh fel tokenUser louta
 POST {{url}}/auth/login
 Content-Type: application/json
 
 { "login": "ali", "motDePasse": "123456" }
 
-### 3) Login du manager (cree avant avec : npm run seed:manager). Copier le token dans @tokenManager
+### 3) Tawa bech na3mlou login lel manager
+### 9bal lezem na3mlou npm run seed:manager bech yetcrea el manager
+### Ba3d ncopyiw el token mta3ou w n7ottouh fel tokenManager 
 POST {{url}}/auth/login
 Content-Type: application/json
 
 { "login": "{{managerLogin}}", "motDePasse": "{{managerPassword}}" }
 
-### Colle ici les tokens
+### Houni bech n7ottou les tokens mta3 user w manager
+### Kol token ncopyiwah mel reponse mta3 login
 @tokenUser = COLLE_TOKEN_USER
 @tokenManager = COLLE_TOKEN_MANAGER
 
-### 4) Liste des utilisateurs (manager) : on y trouve l'id d'Ali
+### 4) Tawa el manager bech ychouf liste mta3 les users
+### Lezem yarja3 200, w fiha nal9aw el id mta3 Ali
 GET {{url}}/users
 Authorization: Bearer {{tokenManager}}
 
-### 5) User essaie de lister les utilisateurs -> 403
+### 5) Tawa el user bech yjareb ychouf liste mta3 les users
+### Lezem yarja3 403 khater ken el manager 3andou el droit
 GET {{url}}/users
 Authorization: Bearer {{tokenUser}}
 
-### 6) Creer un projet (user)
+### 6) Tawa el user bech ya3mel projet jdid esmou Site web
 POST {{url}}/projects
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "nom": "Site web", "description": "Refonte du site", "statut": "en cours" }
 
-### 7) Lister mes projets (recherche + tri)
+### 7) Tawa bech nchoufou les projets mta3 el user
+### Bech nlawej 3la site w nrattbou les projets mel jdid lel 9dim
 GET {{url}}/projects?search=site&sort=-createdAt
 Authorization: Bearer {{tokenUser}}
 
-### 8) Manager : voir tous les projets
+### 8) Tawa el manager bech ychouf les projets el kol
 GET {{url}}/projects
 Authorization: Bearer {{tokenManager}}
 
-### Colle ici l'id du projet et l'id d'Ali
+
+### Houni n7ottou el id mta3 el projet w el id mta3 Ali
+### Ncopyiw les ids mel reponses elli rja3oulna
 @projectId = COLLE_ID_PROJET
 @userId = COLLE_ID_USER
 
-### 9) Creer une tache dans un projet
+### 9) Tawa bech nzidou tache jdida fel projet
+### El tache esmha Maquette w 3andha deadline
 POST {{url}}/projects/{{projectId}}/tasks
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "titre": "Maquette", "description": "Faire la maquette", "deadline": "2026-12-01" }
 
-### 10) Creer une tache via /api/tasks (projet dans le body)
+### 10) Tawa bech na3mlou tache men route /api/tasks
+### El mara hedhi nab3thou el id mta3 projet fel body
 POST {{url}}/tasks
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "titre": "Base de donnees", "projet": "{{projectId}}", "deadline": "2026-11-20" }
 
-### 11) Statut invalide -> 400
+### 11) Tawa bech njarbou statut ghalet esmou fini
+### Lezem el API trajja3 400 khater fini moch statut ma9boul
 POST {{url}}/projects/{{projectId}}/tasks
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "titre": "Test", "statut": "fini" }
 
-### 12) Taches d'un projet (filtre + tri)
+### 12) Tawa bech nchoufou les taches mta3 projet
+### Bech na3mlou filtre 3la todo w tri 7asb deadline
 GET {{url}}/projects/{{projectId}}/tasks?statut=todo&sort=deadline
 Authorization: Bearer {{tokenUser}}
 
-### 13) Toutes mes taches (recherche)
+### 13) Tawa bech nlawejou 3la les taches elli fihom maquette
 GET {{url}}/tasks?search=maquette
 Authorization: Bearer {{tokenUser}}
 
-### Colle ici l'id d'une tache
+### Houni n7ottou id mta3 tache elli bech nesta3mlouha
 @taskId = COLLE_ID_TACHE
 
-### 14) User essaie d'affecter -> 403
+### 14) Tawa el user bech yjareb yaffecti tache l user ekher
+### Lezem yarja3 403 khater el affectation ken lel manager
+
 PATCH {{url}}/tasks/{{taskId}}/assign
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "utilisateur": "{{userId}}" }
 
-### 15) Manager affecte -> 200
+
+### 15) Tawa el manager bech yaffecti tache lel user Ali
+### Lezem yarja3 200 khater el manager 3andou el droit
 PATCH {{url}}/tasks/{{taskId}}/assign
 Content-Type: application/json
 Authorization: Bearer {{tokenManager}}
 
 { "utilisateur": "{{userId}}" }
 
-### 16) Changer le statut d'une tache
+### 16) Tawa bech nbaddlou statut mta3 tache men todo lel doing
 PUT {{url}}/tasks/{{taskId}}
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 { "statut": "doing" }
 
-### 17) Supprimer une tache
+### 17) Tawa bech nafs5ou tache mel projet
 DELETE {{url}}/tasks/{{taskId}}
 Authorization: Bearer {{tokenUser}}
