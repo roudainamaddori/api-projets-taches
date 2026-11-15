@@ -1,16 +1,22 @@
-// تيستات أوتوماتيكية للـ API: نحلو السيرفر الأول (npm start) وبعد في terminal ثاني نكتبو: npm test
-// شرط: حساب الـ manager لازم يكون موجود (npm run seed:manager) و .env فيه MANAGER_LOGIN و MANAGER_PASSWORD
+
+ // Houni 3anna des tests automatiques lel API
+ // Nchaghlou el serveur bel npm start, ba3d fi terminal ekher na3mlou npm test
+ // Lezem compte manager ykoun mawjoud bel npm run seed:manager
+ // W fichier .env fih MANAGER_LOGIN w MANAGER_PASSWORD
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const BASE = `http://localhost:${process.env.PORT || 3000}/api`;
 const suffixe = Date.now().toString().slice(-6);
-// عدّادات: التيستات اللي نجحت واللي فشلت
+
+// Houni na7sbou 9addech men test naj7ou w 9addech men test fchlou
 let ok = 0;
 let ko = 0;
 
-// فونكسيون تبعث طلب HTTP للـ API (مع token كان موجود) وترجع الـ status والـ data
+// Houni fonction tab3ath requete HTTP lel API
+// Ken fama token, nab3thouh m3a el requete
+// W trajja3lna status w data
 async function appel(methode, chemin, token, corps) {
   const res = await fetch(BASE + chemin, {
     method: methode,
@@ -18,11 +24,12 @@ async function appel(methode, chemin, token, corps) {
     body: corps ? JSON.stringify(corps) : undefined,
   });
   let data = null;
-  try { data = await res.json(); } catch (e) { /* الرد ما فيهوش JSON */ }
+  try { data = await res.json(); } catch (e) { /* Houni el reponse ma fihech JSON */ }
   return { status: res.status, data };
 }
 
-// فونكسيون تتأكد من شرط وتطبع OK ولا ECHEC
+// Houni fonction tverifi condition
+// Ken s7i7a taffichi OK, sinon taffichi ECHEC
 function verifier(nom, condition, detail = '') {
   if (condition) { ok++; console.log(`  OK   ${nom}`); }
   else { ko++; console.log(`  ECHEC ${nom} ${detail}`); }
@@ -31,7 +38,7 @@ function verifier(nom, condition, detail = '') {
 (async () => {
   console.log(`Tests sur ${BASE}\n`);
 
-  // --- المستخدمين والـ authentification (JWT والأدوار)
+  // Houni ntestiw el authentification JWT w les roles mta3 les utilisateurs
   console.log('Authentification et roles');
   const a = await appel('POST', '/auth/register', null, { nom: 'Test A', login: `test_a_${suffixe}`, motDePasse: '123456', role: 'manager' });
   verifier('register cree un compte (201)', a.status === 201, a.status);
@@ -65,7 +72,7 @@ function verifier(nom, condition, detail = '') {
   const promo = await appel('PATCH', `/users/${idB}/role`, tA, { role: 'manager' });
   verifier('user ne peut pas se faire promouvoir (403)', promo.status === 403, promo.status);
 
-  // --- المشاريع: الإنشاء، الصلاحيات، البحث والترتيب
+  // Houni ntestiw creation des projets, les autorisations, recherche w tri
   console.log('\nProjets');
   const pA = await appel('POST', '/projects', tA, { nom: `Site web ${suffixe}`, description: 'Refonte', statut: 'en cours' });
   verifier('user cree un projet (201)', pA.status === 201 && pA.data.proprietaire === a.data.user.id, pA.status);
@@ -91,7 +98,7 @@ function verifier(nom, condition, detail = '') {
   const idInvalide = await appel('GET', '/projects/123', tA);
   verifier('id invalide -> 400', idInvalide.status === 400, idInvalide.status);
 
-  // --- التاسكات: الإنشاء، الـ statut، والتعيين
+  // Houni ntestiw creation des tasks, statut w assignation
   console.log('\nTaches');
   const t1 = await appel('POST', `/projects/${pA.data._id}/tasks`, tA, { titre: 'Maquette', description: 'Faire la maquette', deadline: '2026-12-01' });
   verifier('creation de tache dans un projet (201)', t1.status === 201 && t1.data.statut === 'todo', t1.status);
@@ -172,7 +179,7 @@ function verifier(nom, condition, detail = '') {
   verifier('les taches du projet sont supprimees (404)', tacheApres.status === 404, tacheApres.status);
   await appel('DELETE', `/projects/${pB.data._id}`, tM);
 
-  // نفسخو حسابات التيست من الداتابيز باش ما تبقاوش
+  // Houni nafs5ou les comptes mta3 tests mel database bech ma yab9awch
   await mongoose.connect(process.env.MONGO_URI);
   await User.deleteMany({ login: /^test_/ });
   await mongoose.disconnect();
