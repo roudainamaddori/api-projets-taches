@@ -1,14 +1,16 @@
-// Tests automatiques de l'API. Usage : lancer le serveur (npm start) puis, dans un 2e terminal : npm test
-// Prerequis : le compte manager existe (npm run seed:manager) et .env contient MANAGER_LOGIN / MANAGER_PASSWORD.
+// تيستات أوتوماتيكية للـ API: نحلو السيرفر الأول (npm start) وبعد في terminal ثاني نكتبو: npm test
+// شرط: حساب الـ manager لازم يكون موجود (npm run seed:manager) و .env فيه MANAGER_LOGIN و MANAGER_PASSWORD
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const BASE = `http://localhost:${process.env.PORT || 3000}/api`;
 const suffixe = Date.now().toString().slice(-6);
+// عدّادات: التيستات اللي نجحت واللي فشلت
 let ok = 0;
 let ko = 0;
 
+// فونكسيون تبعث طلب HTTP للـ API (مع token كان موجود) وترجع الـ status والـ data
 async function appel(methode, chemin, token, corps) {
   const res = await fetch(BASE + chemin, {
     method: methode,
@@ -16,10 +18,11 @@ async function appel(methode, chemin, token, corps) {
     body: corps ? JSON.stringify(corps) : undefined,
   });
   let data = null;
-  try { data = await res.json(); } catch (e) { /* pas de JSON */ }
+  try { data = await res.json(); } catch (e) { /* الرد ما فيهوش JSON */ }
   return { status: res.status, data };
 }
 
+// فونكسيون تتأكد من شرط وتطبع OK ولا ECHEC
 function verifier(nom, condition, detail = '') {
   if (condition) { ok++; console.log(`  OK   ${nom}`); }
   else { ko++; console.log(`  ECHEC ${nom} ${detail}`); }
@@ -28,7 +31,7 @@ function verifier(nom, condition, detail = '') {
 (async () => {
   console.log(`Tests sur ${BASE}\n`);
 
-  // --- Utilisateurs et authentification
+  // --- المستخدمين والـ authentification (JWT والأدوار)
   console.log('Authentification et roles');
   const a = await appel('POST', '/auth/register', null, { nom: 'Test A', login: `test_a_${suffixe}`, motDePasse: '123456', role: 'manager' });
   verifier('register cree un compte (201)', a.status === 201, a.status);
@@ -62,7 +65,7 @@ function verifier(nom, condition, detail = '') {
   const promo = await appel('PATCH', `/users/${idB}/role`, tA, { role: 'manager' });
   verifier('user ne peut pas se faire promouvoir (403)', promo.status === 403, promo.status);
 
-  // --- Projets
+  // --- المشاريع: الإنشاء، الصلاحيات، البحث والترتيب
   console.log('\nProjets');
   const pA = await appel('POST', '/projects', tA, { nom: `Site web ${suffixe}`, description: 'Refonte', statut: 'en cours' });
   verifier('user cree un projet (201)', pA.status === 201 && pA.data.proprietaire === a.data.user.id, pA.status);
@@ -88,7 +91,7 @@ function verifier(nom, condition, detail = '') {
   const idInvalide = await appel('GET', '/projects/123', tA);
   verifier('id invalide -> 400', idInvalide.status === 400, idInvalide.status);
 
-  // --- Taches
+  // --- التاسكات: الإنشاء، الـ statut، والتعيين
   console.log('\nTaches');
   const t1 = await appel('POST', `/projects/${pA.data._id}/tasks`, tA, { titre: 'Maquette', description: 'Faire la maquette', deadline: '2026-12-01' });
   verifier('creation de tache dans un projet (201)', t1.status === 201 && t1.data.statut === 'todo', t1.status);
@@ -169,7 +172,7 @@ function verifier(nom, condition, detail = '') {
   verifier('les taches du projet sont supprimees (404)', tacheApres.status === 404, tacheApres.status);
   await appel('DELETE', `/projects/${pB.data._id}`, tM);
 
-  // nettoyage des comptes de test
+  // نفسخو حسابات التيست من الداتابيز باش ما تبقاوش
   await mongoose.connect(process.env.MONGO_URI);
   await User.deleteMany({ login: /^test_/ });
   await mongoose.disconnect();
