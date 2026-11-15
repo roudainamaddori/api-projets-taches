@@ -1,13 +1,14 @@
+
 const Task = require('../models/Task');
 const Project = require('../models/Project');
 const User = require('../models/User');
 const { asyncHandler, escapeRegex, buildSort, texte, memeId } = require('../utils/helpers');
 
-// نتأكدو إلي المستخدم المعيّن موجود في الداتابيز
+// Houni net2akdou elli el user elli bech nassigniwlou task mawjoud fel database
 const utilisateurExiste = async (id) => Boolean(await User.findById(id));
 
-// POST /api/projects/:projectId/tasks  ولا  POST /api/tasks (مع "projet" في body)
-// أي مستخدم مسجل (user ولا manager) يجم يعمل تاسك في مشروع متاعو، والـ manager في أي مشروع
+// POST /api/projects/:projectId/tasks wala POST /api/tasks (avec projet fel body)
+// Ay user connecté ynajem ya3mel task fi projet mta3ou, wel manager fi ay projet
 exports.createTask = asyncHandler(async (req, res) => {
   const projectId = req.params.projectId || req.body.projet;
   if (!projectId || typeof projectId !== 'string') {
@@ -23,7 +24,7 @@ exports.createTask = asyncHandler(async (req, res) => {
 
   const { titre, description, statut, deadline, utilisateurAssigne } = req.body;
 
-  // الـ manager برك يعيّن تاسك لمستخدم
+  // Ken el manager ynajem ya3mel assignation mta3 task lel user
   if (utilisateurAssigne) {
     if (!estManager) {
       return res.status(403).json({ message: 'Seul le manager peut affecter une tâche' });
@@ -41,23 +42,24 @@ exports.createTask = asyncHandler(async (req, res) => {
   res.status(201).json(task);
 });
 
-// GET /api/projects/:projectId/tasks  ولا  GET /api/tasks
-// بحث: ?search=mot | فلتر: ?statut=todo | ترتيب: ?sort=deadline ولا ?sort=-titre
+// GET /api/projects/:projectId/tasks wala GET /api/tasks
+// Bech nlawejou nesta3mlou search, bech nfiltriw statut, w bech nrattbou nesta3mlou sort
+// Exemples : ?search=mot | ?statut=todo | ?sort=deadline | ?sort=-titre
 exports.getTasks = asyncHandler(async (req, res) => {
   const conditions = [];
   const estManager = req.user.role === 'manager';
 
   if (req.params.projectId) {
-    // تاسكات مشروع معين
+    // Houni njibou les tasks mta3 projet mo3ayen
     const project = await Project.findById(req.params.projectId);
     if (!project) return res.status(404).json({ message: 'Projet introuvable' });
     conditions.push({ projet: project._id });
-    // مستخدم ماهوش صاحب المشروع يشوف برك التاسكات المعيّنة ليه
+    // Ken el user moch proprietaire, ychouf ken les tasks elli assigned lih
     if (!estManager && !memeId(project.proprietaire, req.user._id)) {
       conditions.push({ utilisateurAssigne: req.user._id });
     }
   } else if (!estManager) {
-    // user عادي: تاسكات مشاريعو + التاسكات اللي معيّنة ليه
+    // El user el 3adi ychouf tasks mta3 projets mta3ou w tasks elli assigned lih
     const mesProjets = await Project.find({ proprietaire: req.user._id }).distinct('_id');
     conditions.push({ $or: [{ projet: { $in: mesProjets } }, { utilisateurAssigne: req.user._id }] });
   }
@@ -66,7 +68,7 @@ exports.getTasks = asyncHandler(async (req, res) => {
   if (texte(req.query.assigne)) conditions.push({ utilisateurAssigne: texte(req.query.assigne) });
   if (texte(req.query.projet) && !req.params.projectId) conditions.push({ projet: texte(req.query.projet) });
 
-  // البحث في العنوان والوصف
+  // Houni nlawejou fel titre w description mta3 task
   if (texte(req.query.search)) {
     const regex = new RegExp(escapeRegex(texte(req.query.search)), 'i');
     conditions.push({ $or: [{ titre: regex }, { description: regex }] });
@@ -75,6 +77,7 @@ exports.getTasks = asyncHandler(async (req, res) => {
   const filtre = conditions.length ? { $and: conditions } : {};
   const sort = buildSort(req.query.sort, ['titre', 'statut', 'deadline', 'createdAt']);
 
+ 
   const tasks = await Task.find(filtre)
     .sort(sort)
     .populate('projet', 'nom')
@@ -82,8 +85,9 @@ exports.getTasks = asyncHandler(async (req, res) => {
   res.json(tasks);
 });
 
-// نجيبو التاسك ونحسبو شكون عندو الحق:
-// manager، صاحب المشروع، ولا المستخدم المعيّن ليها
+
+// Houni njibou task w net2akdou chkoun 3andou el droit bech yaccessiha
+// Ynajem ykoun manager, proprietaire mta3 projet, wala user elli assigned lih
 const trouverTache = async (req, res) => {
   const task = await Task.findById(req.params.id).populate('projet', 'proprietaire');
   if (!task) {
@@ -101,20 +105,20 @@ const trouverTache = async (req, res) => {
   return { task, estManager, estProprietaire, estAssigne };
 };
 
-// GET /api/tasks/:id
+// GET /api/tasks/:id : Houni njibou task wa7da bel ID mta3ha
 exports.getTask = asyncHandler(async (req, res) => {
   const resultat = await trouverTache(req, res);
   if (!resultat) return;
   res.json(resultat.task);
 });
 
-// PUT /api/tasks/:id
+// PUT /api/tasks/:id : Houni nbaddlou les informations mta3 task
 exports.updateTask = asyncHandler(async (req, res) => {
   const resultat = await trouverTache(req, res);
   if (!resultat) return;
   const { task, estManager, estProprietaire } = resultat;
 
-  // التعيين: manager برك
+  // El assignation mta3 task ynajem ya3melha ken el manager
   if (req.body.utilisateurAssigne !== undefined) {
     if (!estManager) {
       return res.status(403).json({ message: 'Seul le manager peut affecter une tâche' });
@@ -124,7 +128,7 @@ exports.updateTask = asyncHandler(async (req, res) => {
     }
   }
 
-  // المستخدم المعيّن (اللي ماهوش manager ولا صاحب المشروع) يبدّل برك الـ statut
+  // Ken el user assigned lel task w moch manager wala proprietaire, ynajem ybaddel ken statut
   let champs = ['titre', 'description', 'statut', 'deadline', 'utilisateurAssigne'];
   if (!estManager && !estProprietaire) {
     const interdits = Object.keys(req.body).filter((c) => c !== 'statut');
@@ -137,12 +141,13 @@ exports.updateTask = asyncHandler(async (req, res) => {
   champs.forEach((champ) => {
     if (req.body[champ] !== undefined) task[champ] = req.body[champ] === '' ? undefined : req.body[champ];
   });
-  await task.save(); // الـ validation تتعمل هنا (statut: todo/doing/done)
+  await task.save(); // Houni na3mlou validation mta3 statut (todo/doing/done)
   res.json(task);
 });
 
-// PATCH /api/tasks/:id/assign : manager برك (محمي في الـ route بـ restrictTo)
-// body: { "utilisateur": "<id>" }  ولا  { "utilisateur": null } باش نلغيو التعيين
+// PATCH /api/tasks/:id/assign : Ken el manager ynajem ya3mel assignation
+// El route mahmiya bel restrictTo
+// body: { "utilisateur": "<id>" } wala { "utilisateur": null } bech nna77iw el assignation
 exports.assignTask = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
   if (!task) return res.status(404).json({ message: 'Tâche introuvable' });
@@ -165,7 +170,7 @@ exports.assignTask = asyncHandler(async (req, res) => {
   res.json(task);
 });
 
-// DELETE /api/tasks/:id (manager ولا صاحب المشروع)
+// DELETE /api/tasks/:id : Ken el manager wala proprietaire mta3 projet ynajem yfasakh task
 exports.deleteTask = asyncHandler(async (req, res) => {
   const resultat = await trouverTache(req, res);
   if (!resultat) return;
