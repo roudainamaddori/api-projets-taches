@@ -1,24 +1,25 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// middleware 1: يتأكد إلي المستخدم مسجل دخول (عندو token صحيح)
+// Middleware 1 : Houni net2akdou elli el user connecté w 3andou token s7i7
 exports.protect = async (req, res, next) => {
   try {
-    // الـ token يجي في header هكا: Authorization: Bearer xxxxx
+    // El token yji fel header haka : Authorization: Bearer xxxxx
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Token manquant, veuillez vous connecter' });
     }
     const token = header.split(' ')[1];
 
-    // نفكو الـ token ونتأكدو إلي صحيح وما فاتش وقتو
+    // Houni nverifiw el token ken s7i7 w mazelt validité mta3ou
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // نلوجو على المستخدم في الداتابيز
+    // Houni nlawejou 3al user fel database
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ message: 'Utilisateur introuvable' });
 
-    // نحطو المستخدم في req باش البقية متاع الكود تستعملو
+    // Houni n7ottou el user fi req bech nesta3mlouh fel reste mta3 el code
     req.user = user;
     next();
   } catch (err) {
@@ -26,7 +27,8 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// middleware 2: يسمح برك للأدوار المحددة (مثلا restrictTo('manager'))
+// Middleware 2 : Houni n5alliw ken les roles elli 3andhom el droit
+// Exemple : restrictTo('manager')
 exports.restrictTo = (...roles) => (req, res, next) => {
   if (!roles.includes(req.user.role)) {
     return res.status(403).json({ message: "Accès interdit : vous n'avez pas le droit" });
